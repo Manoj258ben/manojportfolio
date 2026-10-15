@@ -1,0 +1,2 @@
+# No Python dependencies required.
+# Core application: HTML, CSS, vanilla JavaScript and Supabase.

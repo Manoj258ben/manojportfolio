@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="midnight-dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Portfolio Dashboard</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <!-- Apply the saved theme BEFORE first paint. -->
+  <script>
+    (function () {
+      var ok = ['midnight-dark','minimal-light','cyber-neon','ocean-blue','emerald-green','sunset','glass','monochrome'];
+      var legacy = { 'sunset-gradient': 'sunset', 'glassmorphism': 'glass' };
+      try {
+        var t = localStorage.getItem('portfolio-theme') || localStorage.getItem('portfolio-default-theme');
+        t = legacy[t] || t;
+        if (ok.indexOf(t) !== -1) document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body class="admin-body">
+  <noscript><p class="noscript-msg">The admin dashboard needs JavaScript enabled.</p></noscript>
+
+  <!-- ===== STARTUP SPINNER (while the saved session is checked) ===== -->
+  <div id="bootScreen" class="boot-screen"><i class="fas fa-spinner fa-spin"></i> Checking session…</div>
+
+  <!-- ===== LOGIN PAGE ===== -->
+  <div id="loginPage" class="login-page" hidden>
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <a href="index.html" class="nav-logo" aria-label="Back to portfolio">
+            <span class="logo-bracket">&lt;</span><span class="logo-name">Dev</span><span class="logo-bracket">/&gt;</span>
+          </a>
+          <h1>Admin Login</h1>
+          <p>Sign in to manage your portfolio</p>
+        </div>
+
+        <div id="loginBanner" class="form-status" role="alert"></div>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="login-form" novalidate>
+          <div class="form-group">
+            <label for="loginEmail">Email Address</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-envelope" aria-hidden="true"></i>
+              <input type="email" id="loginEmail" placeholder="admin@example.com" required autocomplete="email" />
+            </div>
+            <span class="form-error" id="loginEmailError"></span>
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-lock" aria-hidden="true"></i>
+              <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" />
+              <button type="button" class="toggle-password" id="togglePassword" aria-label="Show password" aria-pressed="false">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <span class="form-error" id="loginPasswordError"></span>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" id="loginSubmitBtn">
+            <span class="btn-text"><i class="fas fa-sign-in-alt"></i> Sign In</span>
+            <span class="btn-loader" style="display:none"><i class="fas fa-spinner fa-spin"></i> Signing in…</span>
+          </button>
+          <div id="loginError" class="form-status" role="alert"></div>
+          <div class="login-footer">
+            <button type="button" id="showForgotPassword" class="text-link">Forgot your password?</button>
+          </div>
+        </form>
+
+        <!-- Forgot Password Form -->
+        <form id="forgotPasswordForm" class="login-form" hidden novalidate>
+          <p class="forgot-text">Enter your email and we'll send a password reset link.</p>
+          <div class="form-group">
+            <label for="resetEmail">Email Address</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-envelope" aria-hidden="true"></i>
+              <input type="email" id="resetEmail" placeholder="admin@example.com" required autocomplete="email" />
+            </div>
+            <span class="form-error" id="resetEmailError"></span>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" id="resetSubmitBtn">
+            <span class="btn-text"><i class="fas fa-paper-plane"></i> Send Reset Link</span>
+            <span class="btn-loader" style="display:none"><i class="fas fa-spinner fa-spin"></i> Sending…</span>
+          </button>
+          <div id="resetStatus" class="form-status" role="status"></div>
+          <div class="login-footer">
+            <button type="button" id="backToLogin" class="text-link"><i class="fas fa-arrow-left"></i> Back to login</button>
+          </div>
+        </form>
+
+        <!-- Update Password Form (shown after clicking the reset link in the email) -->
+        <form id="updatePasswordForm" class="login-form" hidden novalidate>
+          <p class="forgot-text">Choose a new password (at least 8 characters).</p>
+          <div class="form-group">
+            <label for="newPassword">New Password</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-lock" aria-hidden="true"></i>
+              <input type="password" id="newPassword" placeholder="••••••••" required minlength="8" autocomplete="new-password" />
+              <button type="button" class="toggle-password" id="toggleNewPassword" aria-label="Show password" aria-pressed="false">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <span class="form-error" id="newPasswordError"></span>
+          </div>
+          <div class="form-group">
+            <label for="confirmNewPassword">Confirm New Password</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-lock" aria-hidden="true"></i>
+              <input type="password" id="confirmNewPassword" placeholder="••••••••" required minlength="8" autocomplete="new-password" />
+            </div>
+            <span class="form-error" id="confirmNewPasswordError"></span>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" id="updatePasswordBtn">
+            <span class="btn-text"><i class="fas fa-key"></i> Update Password</span>
+            <span class="btn-loader" style="display:none"><i class="fas fa-spinner fa-spin"></i> Updating…</span>
+          </button>
+          <div id="updatePasswordStatus" class="form-status" role="status"></div>
+        </form>
+      </div>
+      <a href="index.html" class="back-to-site"><i class="fas fa-arrow-left"></i> Back to Portfolio</a>
+    </div>
+  </div>
+
+  <!-- ===== ADMIN DASHBOARD ===== -->
+  <div id="dashboardPage" class="dashboard-page" hidden>
+    <div id="sidebarOverlay" class="sidebar-overlay" hidden></div>
+
+    <aside id="sidebar" class="sidebar" aria-label="Dashboard navigation">
+      <div class="sidebar-header">
+        <a href="index.html" class="nav-logo" aria-label="View portfolio">
+          <span class="logo-bracket">&lt;</span><span class="logo-name">Dev</span><span class="logo-bracket">/&gt;</span>
+        </a>
+        <span class="sidebar-badge">Admin</span>
+      </div>
+      <nav class="sidebar-nav">
+        <button type="button" class="sidebar-link active" data-panel="overview"><i class="fas fa-chart-pie"></i> <span>Dashboard</span></button>
+        <button type="button" class="sidebar-link" data-panel="profile"><i class="fas fa-user"></i> <span>Profile</span></button>
+        <button type="button" class="sidebar-link" data-panel="projects"><i class="fas fa-code"></i> <span>Projects</span></button>
+        <button type="button" class="sidebar-link" data-panel="skills"><i class="fas fa-layer-group"></i> <span>Skills</span></button>
+        <button type="button" class="sidebar-link" data-panel="timeline"><i class="fas fa-stream"></i> <span>Education &amp; Exp</span></button>
+        <button type="button" class="sidebar-link" data-panel="certificates"><i class="fas fa-certificate"></i> <span>Certificates</span></button>
+        <button type="button" class="sidebar-link" data-panel="achievements"><i class="fas fa-trophy"></i> <span>Achievements</span></button>
+        <button type="button" class="sidebar-link" data-panel="resume"><i class="fas fa-file-pdf"></i> <span>Resume</span></button>
+        <button type="button" class="sidebar-link" data-panel="settings"><i class="fas fa-cog"></i> <span>Settings</span></button>
+        <button type="button" class="sidebar-link" data-panel="messages"><i class="fas fa-envelope"></i> <span>Messages</span>
+          <span class="sidebar-count" id="msgCount" hidden>0</span></button>
+      </nav>
+      <div class="sidebar-footer">
+        <button type="button" id="logoutBtn" class="sidebar-link logout-link"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></button>
+      </div>
+    </aside>
+
+    <main class="dashboard-main">
+      <div class="dashboard-topbar">
+        <button type="button" id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="sidebar">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="topbar-right">
+          <label class="theme-select-wrap" for="adminThemeSelect"><i class="fas fa-palette" aria-hidden="true"></i><span class="sr-only">Theme</span></label>
+          <select id="adminThemeSelect" class="theme-select" aria-label="Dashboard theme">
+            <option value="midnight-dark">Midnight Dark</option>
+            <option value="minimal-light">Minimal Light</option>
+            <option value="cyber-neon">Cyber Neon</option>
+            <option value="ocean-blue">Ocean Blue</option>
+            <option value="emerald-green">Emerald Green</option>
+            <option value="sunset">Sunset</option>
+            <option value="glass">Glass</option>
+            <option value="monochrome">Monochrome</option>
+          </select>
+          <span id="adminEmail" class="admin-email"></span>
+          <a href="index.html" target="_blank" rel="noopener" class="btn btn-sm btn-outline">
+            <i class="fas fa-external-link-alt"></i> View Site
+          </a>
+        </div>
+      </div>
+
+      <div class="dashboard-content">
+        <div id="globalError" class="form-status" role="alert"></div>
+
+        <!-- ── Overview ── -->
+        <section class="panel active" id="panel-overview" aria-labelledby="t-overview">
+          <h2 class="panel-title" id="t-overview">Dashboard Overview</h2>
+          <div class="stats-grid">
+            <div class="stat-widget"><div class="stat-widget-icon"><i class="fas fa-code"></i></div>
+              <div class="stat-widget-info"><span class="stat-widget-number" id="statProjects">–</span><span class="stat-widget-label">Projects</span></div></div>
+            <div class="stat-widget"><div class="stat-widget-icon"><i class="fas fa-layer-group"></i></div>
+              <div class="stat-widget-info"><span class="stat-widget-number" id="statSkills">–</span><span class="stat-widget-label">Skills</span></div></div>
+            <div class="stat-widget"><div class="stat-widget-icon"><i class="fas fa-certificate"></i></div>
+              <div class="stat-widget-info"><span class="stat-widget-number" id="statCerts">–</span><span class="stat-widget-label">Certificates</span></div></div>
+            <div class="stat-widget"><div class="stat-widget-icon"><i class="fas fa-trophy"></i></div>
+              <div class="stat-widget-info"><span class="stat-widget-number" id="statAchievements">–</span><span class="stat-widget-label">Achievements</span></div></div>
+            <div class="stat-widget"><div class="stat-widget-icon"><i class="fas fa-envelope"></i></div>
+              <div class="stat-widget-info"><span class="stat-widget-number" id="statMessages">–</span><span class="stat-widget-label">Messages</span></div></div>
+            <div class="stat-widget"><div class="stat-widget-icon"><i class="fas fa-envelope-open-text"></i></div>
+              <div class="stat-widget-info"><span class="stat-widget-number" id="statUnread">–</span><span class="stat-widget-label">Unread Messages</span></div></div>
+          </div>
+
+          <h3 class="section-subtitle">Quick actions</h3>
+          <div class="shortcut-row">
+            <button type="button" class="btn btn-outline btn-sm" data-goto="projects" data-action="add"><i class="fas fa-plus"></i> Add project</button>
+            <button type="button" class="btn btn-outline btn-sm" data-goto="skills" data-action="add"><i class="fas fa-plus"></i> Add skill</button>
+            <button type="button" class="btn btn-outline btn-sm" data-goto="certificates" data-action="add"><i class="fas fa-plus"></i> Add certificate</button>
+            <button type="button" class="btn btn-outline btn-sm" data-goto="resume"><i class="fas fa-file-pdf"></i> Update resume</button>
+            <button type="button" class="btn btn-outline btn-sm" data-goto="profile"><i class="fas fa-user"></i> Edit profile</button>
+          </div>
+
+          <div class="recent-section">
+            <h3 class="section-subtitle">Recent messages</h3>
+            <div id="recentMessages" class="admin-list"><p class="empty-state">Loading…</p></div>
+          </div>
+        </section>
+
+        <!-- ── Profile ── -->
+        <section class="panel" id="panel-profile" aria-labelledby="t-profile">
+          <h2 class="panel-title" id="t-profile">Edit Profile</h2>
+          <form id="profileForm" class="admin-form" novalidate>
+            <div class="form-row">
+              <div class="form-group"><label for="profileName">Full name *</label>
+                <input type="text" id="profileName" maxlength="100" placeholder="Your Name" required /></div>
+              <div class="form-group"><label for="profileTitle">Professional title</label>
+                <input type="text" id="profileTitle" maxlength="100" placeholder="Computer Science Engineering Student" /></div>
+            </div>
+            <div class="form-group"><label for="profileRoles">Typing-effect roles <small>(comma-separated, shown in the hero)</small></label>
+              <input type="text" id="profileRoles" maxlength="400" placeholder="Full-Stack Developer, AI/ML Enthusiast, UI/UX Designer" /></div>
+            <div class="form-group"><label for="profileHeroIntro">Hero introduction</label>
+              <textarea id="profileHeroIntro" rows="2" maxlength="400" placeholder="One or two sentences shown under your name…"></textarea></div>
+            <div class="form-group"><label for="profileBio">Biography (About section)</label>
+              <textarea id="profileBio" rows="5" maxlength="3000" placeholder="Tell visitors about yourself…"></textarea></div>
+            <div class="form-row">
+              <div class="form-group"><label for="profileEducation">Education summary</label>
+                <input type="text" id="profileEducation" maxlength="200" placeholder="B.Tech in Computer Science" /></div>
+              <div class="form-group"><label for="profileLocation">Location</label>
+                <input type="text" id="profileLocation" maxlength="100" placeholder="City, Country" /></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label for="profileInterests">Technical &amp; professional interests</label>
+                <input type="text" id="profileInterests" maxlength="300" placeholder="Web Dev, AI/ML, Open Source" /></div>
+              <div class="form-group"><label for="profileGoals">Career goals</label>
+                <input type="text" id="profileGoals" maxlength="300" placeholder="Your career goal" /></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label for="profileEmail">Contact email</label>
+                <input type="email" id="profileEmail" maxlength="254" placeholder="you@example.com" /></div>
+              <div class="form-group"><label for="profilePhone">Phone number</label>
+                <input type="tel" id="profilePhone" maxlength="25" placeholder="+91 98765 43210" /></div>
+            </div>
+            <div class="form-group"><label for="profileYears">Years of coding <small>(optional counter on the public site)</small></label>
+              <input type="number" id="profileYears" min="0" max="60" step="1" placeholder="3" /></div>
+
+            <h3 class="form-section-title">Social links</h3>
+            <div class="form-row">
+              <div class="form-group"><label for="socialGithub"><i class="fab fa-github"></i> GitHub URL</label>
+                <input type="url" id="socialGithub" placeholder="https://github.com/you" /></div>
+              <div class="form-group"><label for="socialLinkedin"><i class="fab fa-linkedin"></i> LinkedIn URL</label>
+                <input type="url" id="socialLinkedin" placeholder="https://linkedin.com/in/you" /></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label for="socialTwitter"><i class="fab fa-x-twitter"></i> Twitter / X URL</label>
+                <input type="url" id="socialTwitter" placeholder="https://x.com/you" /></div>
+              <div class="form-group"><label for="socialInstagram"><i class="fab fa-instagram"></i> Instagram URL</label>
+                <input type="url" id="socialInstagram" placeholder="https://instagram.com/you" /></div>
+            </div>
+            <div class="form-group"><label for="socialWebsite"><i class="fas fa-globe"></i> Website URL</label>
+              <input type="url" id="socialWebsite" placeholder="https://your-site.com" /></div>
+
+            <h3 class="form-section-title">Photos <small>(JPG, PNG, WebP or GIF · max 5 MB)</small></h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="profilePhotoFile">Profile photo (hero)</label>
+                <input type="file" id="profilePhotoFile" accept="image/jpeg,image/png,image/webp,image/gif" />
+                <img id="profilePhotoPreview" class="upload-preview" alt="Profile photo preview" hidden />
+                <button type="button" class="btn btn-sm btn-outline" id="profilePhotoRemove" hidden><i class="fas fa-trash"></i> Remove photo</button>
+              </div>
+              <div class="form-group">
+                <label for="aboutPhotoFile">About-section photo</label>
+                <input type="file" id="aboutPhotoFile" accept="image/jpeg,image/png,image/webp,image/gif" />
+                <img id="aboutPhotoPreview" class="upload-preview" alt="About photo preview" hidden />
+                <button type="button" class="btn btn-sm btn-outline" id="aboutPhotoRemove" hidden><i class="fas fa-trash"></i> Remove photo</button>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="profileSaveBtn">
+                <span class="btn-text"><i class="fas fa-save"></i> Save Profile</span>
+                <span class="btn-loader" style="display:none"><i class="fas fa-spinner fa-spin"></i> Saving…</span>
+              </button>
+            </div>
+            <div class="form-status" role="status"></div>
+          </form>
+        </section>
+
+        <!-- ── Projects ── -->
+        <section class="panel" id="panel-projects" aria-labelledby="t-projects">
+          <div class="panel-header">
+            <h2 class="panel-title" id="t-projects">Manage Projects</h2>
+            <button type="button" class="btn btn-primary btn-sm" id="addProjectBtn"><i class="fas fa-plus"></i> Add Project</button>
+          </div>
+          <p class="panel-hint">Use the arrows to change the order on your public site.</p>
+          <div id="projectsList" class="admin-list"><p class="empty-state">Loading projects…</p></div>
+        </section>
+
+        <!-- ── Skills ── -->
+        <section class="panel" id="panel-skills" aria-labelledby="t-skills">
+          <div class="panel-header">
+            <h2 class="panel-title" id="t-skills">Manage Skills</h2>
+            <button type="button" class="btn btn-primary btn-sm" id="addSkillBtn"><i class="fas fa-plus"></i> Add Skill</button>
+          </div>
+          <p class="panel-hint">Skills are grouped by category on the public site. Use the arrows to reorder.</p>
+          <div id="skillsList" class="admin-list"><p class="empty-state">Loading skills…</p></div>
+        </section>
+
+        <!-- ── Education & Experience ── -->
+        <section class="panel" id="panel-timeline" aria-labelledby="t-timeline">
+          <div class="panel-header">
+            <h2 class="panel-title" id="t-timeline">Education &amp; Experience</h2>
+            <button type="button" class="btn btn-primary btn-sm" id="addTimelineBtn"><i class="fas fa-plus"></i> Add Entry</button>
+          </div>
+          <div id="timelineList" class="admin-list"><p class="empty-state">Loading timeline…</p></div>
+        </section>
+
+        <!-- ── Certificates ── -->
+        <section class="panel" id="panel-certificates" aria-labelledby="t-certs">
+          <div class="panel-header">
+            <h2 class="panel-title" id="t-certs">Manage Certificates</h2>
+            <button type="button" class="btn btn-primary btn-sm" id="addCertBtn"><i class="fas fa-plus"></i> Add Certificate</button>
+          </div>
+          <div id="certsList" class="admin-list"><p class="empty-state">Loading certificates…</p></div>
+        </section>
+
+        <!-- ── Achievements ── -->
+        <section class="panel" id="panel-achievements" aria-labelledby="t-ach">
+          <div class="panel-header">
+            <h2 class="panel-title" id="t-ach">Manage Achievements</h2>
+            <button type="button" class="btn btn-primary btn-sm" id="addAchievementBtn"><i class="fas fa-plus"></i> Add Achievement</button>
+          </div>
+          <div id="achievementsList" class="admin-list"><p class="empty-state">Loading achievements…</p></div>
+        </section>
+
+        <!-- ── Resume ── -->
+        <section class="panel" id="panel-resume" aria-labelledby="t-resume">
+          <h2 class="panel-title" id="t-resume">Manage Resume</h2>
+          <div class="card-box">
+            <h3 class="section-subtitle">Current resume</h3>
+            <p id="currentResumeInfo" class="upload-info">Loading…</p>
+            <div class="form-actions" id="resumeCurrentActions" hidden>
+              <a id="resumeOpenLink" class="btn btn-outline btn-sm" href="#" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i> Open</a>
+              <a id="resumeDownloadLink" class="btn btn-outline btn-sm" href="#" rel="noopener"><i class="fas fa-download"></i> Download</a>
+              <button type="button" class="btn btn-danger btn-sm" id="resumeRemoveBtn"><i class="fas fa-trash"></i> Remove resume</button>
+            </div>
+          </div>
+          <form id="resumeForm" class="admin-form" novalidate>
+            <div class="form-group">
+              <label for="resumeFile">Upload or replace resume <small>(PDF only · max 5 MB)</small></label>
+              <input type="file" id="resumeFile" accept="application/pdf" />
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="resumeUploadBtn">
+                <span class="btn-text"><i class="fas fa-upload"></i> Upload Resume</span>
+                <span class="btn-loader" style="display:none"><i class="fas fa-spinner fa-spin"></i> Uploading…</span>
+              </button>
+            </div>
+            <div class="form-status" role="status"></div>
+          </form>
+          <div id="resumePreviewAdmin" class="resume-preview-admin"></div>
+        </section>
+
+        <!-- ── Settings ── -->
+        <section class="panel" id="panel-settings" aria-labelledby="t-settings">
+          <h2 class="panel-title" id="t-settings">Website Settings</h2>
+          <form id="settingsForm" class="admin-form" novalidate>
+            <div class="form-row">
+              <div class="form-group"><label for="settingSiteTitle">Website title</label>
+                <input type="text" id="settingSiteTitle" maxlength="120" placeholder="Your Name — Portfolio" /></div>
+              <div class="form-group"><label for="settingTagline">Tagline</label>
+                <input type="text" id="settingTagline" maxlength="200" placeholder="Short tagline" /></div>
+            </div>
+            <div class="form-group"><label for="settingDefaultTheme">Default theme <small>(for visitors who have not picked one)</small></label>
+              <select id="settingDefaultTheme">
+                <option value="midnight-dark">Midnight Dark</option>
+                <option value="minimal-light">Minimal Light</option>
+                <option value="cyber-neon">Cyber Neon</option>
+                <option value="ocean-blue">Ocean Blue</option>
+                <option value="emerald-green">Emerald Green</option>
+                <option value="sunset">Sunset</option>
+                <option value="glass">Glass</option>
+                <option value="monochrome">Monochrome</option>
+              </select></div>
+            <h3 class="form-section-title">SEO</h3>
+            <div class="form-group"><label for="settingSeoTitle">SEO title</label>
+              <input type="text" id="settingSeoTitle" maxlength="70" placeholder="Shown in browser tabs and search results" /></div>
+            <div class="form-group"><label for="settingSeoDesc">SEO description</label>
+              <textarea id="settingSeoDesc" rows="2" maxlength="300" placeholder="About 150 characters works best"></textarea></div>
+            <h3 class="form-section-title">Footer</h3>
+            <div class="form-group"><label for="settingFooterText">Footer text</label>
+              <input type="text" id="settingFooterText" maxlength="200" placeholder="Building the future, one line of code at a time." /></div>
+            <div class="form-group"><label for="settingCopyright">Copyright text <small>(leave empty for an automatic “© year name”)</small></label>
+              <input type="text" id="settingCopyright" maxlength="200" placeholder="© 2026 Your Name. All rights reserved." /></div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="settingsSaveBtn">
+                <span class="btn-text"><i class="fas fa-save"></i> Save Settings</span>
+                <span class="btn-loader" style="display:none"><i class="fas fa-spinner fa-spin"></i> Saving…</span>
+              </button>
+            </div>
+            <div class="form-status" role="status"></div>
+          </form>
+        </section>
+
+        <!-- ── Messages ── -->
+        <section class="panel" id="panel-messages" aria-labelledby="t-messages">
+          <div class="panel-header">
+            <h2 class="panel-title" id="t-messages">Contact Messages</h2>
+            <div class="segmented" role="group" aria-label="Filter messages">
+              <button type="button" class="seg-btn active" data-msg-filter="all" aria-pressed="true">All</button>
+              <button type="button" class="seg-btn" data-msg-filter="unread" aria-pressed="false">Unread</button>
+            </div>
+          </div>
+          <div id="messagesList" class="admin-list"><p class="empty-state">Loading messages…</p></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- ===== MODALS ===== -->
+  <!-- Project -->
+  <div id="projectModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="projectModalTitle">
+    <div class="modal-content">
+      <div class="modal-header"><h3 id="projectModalTitle">Add Project</h3>
+        <button type="button" class="modal-close" data-close aria-label="Close">&times;</button></div>
+      <form id="projectForm" class="admin-form" novalidate>
+        <div class="form-group"><label for="projectTitle">Title *</label>
+          <input type="text" id="projectTitle" maxlength="150" required /></div>
+        <div class="form-group"><label for="projectDesc">Description</label>
+          <textarea id="projectDesc" rows="3" maxlength="2000"></textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label for="projectCategory">Category</label>
+            <select id="projectCategory">
+              <option value="web">Web</option><option value="ai">AI/ML</option>
+              <option value="mobile">Mobile</option><option value="other">Other</option>
+            </select></div>
+          <div class="form-group"><label for="projectDate">Project date <small>(optional)</small></label>
+            <input type="date" id="projectDate" /></div>
+        </div>
+        <div class="form-group"><label for="projectTech">Technologies <small>(comma-separated)</small></label>
+          <input type="text" id="projectTech" placeholder="React, Node.js, MongoDB" /></div>
+        <div class="form-row">
+          <div class="form-group"><label for="projectGithub">GitHub URL</label>
+            <input type="url" id="projectGithub" placeholder="https://github.com/…" /></div>
+          <div class="form-group"><label for="projectLive">Live demo URL</label>
+            <input type="url" id="projectLive" placeholder="https://…" /></div>
+        </div>
+        <div class="form-group"><label for="projectImageFile">Project image <small>(JPG, PNG, WebP, GIF · max 5 MB)</small></label>
+          <input type="file" id="projectImageFile" accept="image/jpeg,image/png,image/webp,image/gif" />
+          <img id="projectImagePreview" class="upload-preview" alt="Project image preview" hidden />
+          <button type="button" class="btn btn-sm btn-outline" id="projectImageRemove" hidden><i class="fas fa-trash"></i> Remove image</button></div>
+        <div class="form-row">
+          <div class="form-group"><label class="checkbox-label"><input type="checkbox" id="projectFeatured" /> <span>Featured project</span></label></div>
+          <div class="form-group"><label class="checkbox-label"><input type="checkbox" id="projectPublished" checked /> <span>Published (visible on portfolio)</span></label></div>
+        </div>
+        <div class="form-status" role="alert"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" data-close>Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <span class="btn-text"><i class="fas fa-save"></i> Save</span>
+            <span class="btn-loader" style="display:none"><i class="fas fa-spinner fa-spin"></i> Saving…</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Skill -->
+  <div id="skillModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="skillModalTitle">
+    <div class="modal-content">
+      <div class="modal-header"><h3 id="skillModalTitle">Add Skill</h3>
+        <button type="button" class="modal-close" data-close aria-label="Close">&times;</button></div>
+      <form id="skillForm" class="admin-form" novalidate>
+        <div class="form-row">
+          <div class="form-group"><label for="skillName">Skill name *</label>
+            <input type="text" id="skillName" maxlength="60" required placeholder="Python" /></div>
+          <div class="form-group"><label for="skillCategory">Category *</label>
+            <input type="text" id="skillCategory" maxlength="60" list="skillCategoryList" required placeholder="Programming Languages" />
+            <datalist id="skillCategoryList"></datalist></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label for="skillIcon">Icon</label>
+            <select id="skillIcon">
+              <option value="">(default)</option>
+              <option value="fas fa-code">Code</option>
+              <option value="fab fa-python">Python</option>
+              <option value="fab fa-js">JavaScript</option>
+              <option value="fab fa-java">Java</option>
+              <option value="fab fa-html5">HTML5</option>
+              <option value="fab fa-css3-alt">CSS3</option>
+              <option value="fab fa-react">React</option>
+              <option value="fab fa-node-js">Node.js</option>
+              <option value="fab fa-git-alt">Git</option>
+              <option value="fab fa-github">GitHub</option>
+              <option value="fab fa-docker">Docker</option>
+              <option value="fab fa-linux">Linux</option>
+              <option value="fas fa-database">Database</option>
+              <option value="fas fa-brain">AI / ML</option>
+              <option value="fas fa-paint-brush">Design</option>
+              <option value="fas fa-tools">Tools</option>
+              <option value="fas fa-cloud">Cloud</option>
+              <option value="fas fa-mobile-alt">Mobile</option>
+              <option value="fas fa-globe">Web</option>
+              <option value="fas fa-terminal">Terminal</option>
+            </select></div>
+          <div class="form-group"><label for="skillLevel">Proficiency: <output id="skillLevelOut">5</output>/10</label>
+            <input type="range" id="skillLevel" min="1" max="10" step="1" value="5" /></div>
+        </div>
+        <div class="form-status" role="alert"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" data-close>Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <span class="btn-text"><i class="fas fa-save"></i> Save</span>
+            <span class="btn-loader" style="display:none"><i class="fas fa-spinner fa-spin"></i> Saving…</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div id="timelineModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="timelineModalTitle">
+    <div class="modal-content">
+      <div class="modal-header"><h3 id="timelineModalTitle">Add Entry</h3>
+        <button type="button" class="modal-close" data-close aria-label="Close">&times;</button></div>
+      <form id="timelineForm" class="admin-form" novalidate>
+        <div class="form-row">
+          <div class="form-group"><label for="timelineType">Type</label>
+            <select id="timelineType">
+              <option value="education">Education</option>
+              <option value="experience">Work experience</option>
+              <option value="internship">Internship</option>
+              <option value="activity">Activity / Extra-curricular</option>
+            </select></div>
+          <div class="form-group"><label for="timelineLocation">Location</label>
+            <input type="text" id="timelineLocation" maxlength="100" placeholder="City, Country" /></div>
+        </div>
+        <div class="form-group"><label for="timelineTitle">Title *</label>
+          <input type="text" id="timelineTitle" maxlength="150" required placeholder="B.Tech in Computer Science" /></div>
+        <div class="form-group"><label for="timelineOrg">Institution / organization</label>
+          <input type="text" id="timelineOrg" maxlength="150" placeholder="University / Company name" /></div>
+        <div class="form-row">
+          <div class="form-group"><label for="timelineStart">Start date</label>
+            <input type="date" id="timelineStart" /></div>
+          <div class="form-group"><label for="timelineEnd">End date</label>
+            <input type="date" id="timelineEnd" /></div>
+        </div>
+        <div class="form-group"><label class="checkbox-label"><input type="checkbox" id="timelineCurrent" /> <span>Currently here (shows “Present”)</span></label></div>
+        <div class="form-group"><label for="timelineDesc">Description</label>
+          <textarea id="timelineDesc" rows="3" maxlength="1500"></textarea></div>
+        <div class="form-status" role="alert"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" data-close>Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <span class="btn-text"><i class="fas fa-save"></i> Save</span>
+            <span class="btn-loader" style="display:none"><i class="fas fa-spinner fa-spin"></i> Saving…</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Certificate -->
+  <div id="certModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="certModalTitle">
+    <div class="modal-content">
+      <div class="modal-header"><h3 id="certModalTitle">Add Certificate</h3>
+        <button type="button" class="modal-close" data-close aria-label="Close">&times;</button></div>
+      <form id="certForm" class="admin-form" novalidate>
+        <div class="form-group"><label for="certTitle">Certificate title *</label>
+          <input type="text" id="certTitle" maxlength="150" required /></div>
+        <div class="form-row">
+          <div class="form-group"><label for="certIssuer">Issuing organization</label>
+            <input type="text" id="certIssuer" maxlength="150" /></div>
+          <div class="form-group"><label for="certDate">Issue date</label>
+            <input type="date" id="certDate" /></div>
+        </div>
+        <div class="form-group"><label for="certUrl">Verification / credential URL</label>
+          <input type="url" id="certUrl" placeholder="https://…" /></div>
+        <div class="form-group"><label for="certDesc">Description</label>
+          <textarea id="certDesc" rows="2" maxlength="600"></textarea></div>
+        <div class="form-group"><label for="certImageFile">Certificate image <small>(JPG, PNG, WebP, GIF · max 5 MB)</small></label>
+          <input type="file" id="certImageFile" accept="image/jpeg,image/png,image/webp,image/gif" />
+          <img id="certImagePreview" class="upload-preview" alt="Certificate image preview" hidden />
+          <button type="button" class="btn btn-sm btn-outline" id="certImageRemove" hidden><i class="fas fa-trash"></i> Remove image</button></div>
+        <div class="form-status" role="alert"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" data-close>Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <span class="btn-text"><i class="fas fa-save"></i> Save</span>
+            <span class="btn-loader" style="display:none"><i class="fas fa-spinner fa-spin"></i> Saving…</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Achievement -->
+  <div id="achievementModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="achievementModalTitle">
+    <div class="modal-content">
+      <div class="modal-header"><h3 id="achievementModalTitle">Add Achievement</h3>
+        <button type="button" class="modal-close" data-close aria-label="Close">&times;</button></div>
+      <form id="achievementForm" class="admin-form" novalidate>
+        <div class="form-group"><label for="achTitle">Title *</label>
+          <input type="text" id="achTitle" maxlength="150" required /></div>
+        <div class="form-row">
+          <div class="form-group"><label for="achDate">Date</label>
+            <input type="date" id="achDate" /></div>
+          <div class="form-group"><label for="achIcon">Icon</label>
+            <select id="achIcon">
+              <option value="fas fa-trophy">Trophy</option>
+              <option value="fas fa-medal">Medal</option>
+              <option value="fas fa-award">Award</option>
+              <option value="fas fa-laptop-code">Hackathon</option>
+              <option value="fas fa-file-alt">Paper</option>
+              <option value="fas fa-chalkboard-teacher">Workshop / Talk</option>
+              <option value="fas fa-users">Event / Team</option>
+              <option value="fas fa-star">Star</option>
+              <option value="fas fa-graduation-cap">Academic</option>
+            </select></div>
+        </div>
+        <div class="form-group"><label for="achDesc">Description</label>
+          <textarea id="achDesc" rows="3" maxlength="1000"></textarea></div>
+        <div class="form-status" role="alert"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" data-close>Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <span class="btn-text"><i class="fas fa-save"></i> Save</span>
+            <span class="btn-loader" style="display:none"><i class="fas fa-spinner fa-spin"></i> Saving…</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Message details -->
+  <div id="messageModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="messageModalTitle">
+    <div class="modal-content">
+      <div class="modal-header"><h3 id="messageModalTitle">Message</h3>
+        <button type="button" class="modal-close" data-close aria-label="Close">&times;</button></div>
+      <div class="message-detail">
+        <dl class="message-meta">
+          <dt>From</dt><dd id="msgFrom"></dd>
+          <dt>Email</dt><dd id="msgEmail"></dd>
+          <dt>Subject</dt><dd id="msgSubject"></dd>
+          <dt>Received</dt><dd id="msgDate"></dd>
+          <dt>Status</dt><dd id="msgStatus"></dd>
+        </dl>
+        <div id="msgBody" class="message-body"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline btn-sm" id="msgToggleRead"></button>
+        <a class="btn btn-outline btn-sm" id="msgReply" href="#"><i class="fas fa-reply"></i> Reply</a>
+        <button type="button" class="btn btn-danger btn-sm" id="msgDelete"><i class="fas fa-trash"></i> Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm dialog -->
+  <div id="confirmDialog" class="modal" hidden role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+    <div class="modal-content modal-sm">
+      <div class="modal-header"><h3 id="confirmTitle">Confirm action</h3></div>
+      <p id="confirmMessage" class="confirm-msg"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="confirmCancel">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmOk">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container" role="status" aria-live="polite"></div>
+
+  <!-- ===== SCRIPTS ===== -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
